@@ -5,7 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ExternalProject_Add(liburing_externalproject
         GIT_REPOSITORY https://github.com/axboe/liburing.git
-        GIT_TAG liburing-2.8
+        GIT_TAG liburing-2.11
         GIT_SHALLOW ON
         SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/liburing/source
         BINARY_DIR ${CMAKE_SOURCE_DIR}/external/liburing/bin

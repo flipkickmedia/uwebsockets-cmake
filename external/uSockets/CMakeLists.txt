@@ -6,7 +6,7 @@ include(FetchContent)
 FetchContent_Declare(
         uSockets_content
         GIT_REPOSITORY https://github.com/uNetworking/uSockets
-        GIT_TAG 182b7e4
+        GIT_TAG v0.8.8
         GIT_SHALLOW ON
         GIT_SUBMODULES ""
         SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/uSockets/source
