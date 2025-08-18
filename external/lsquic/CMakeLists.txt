@@ -5,7 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ExternalProject_Add(lsquic_externalproject
         GIT_REPOSITORY https://github.com/litespeedtech/lsquic.git
-        GIT_TAG 6ed1d09
+        GIT_TAG v4.3.1
         GIT_SHALLOW ON
         SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/lsquic/source
         BINARY_DIR  ${CMAKE_SOURCE_DIR}/external/lsquic/bin
