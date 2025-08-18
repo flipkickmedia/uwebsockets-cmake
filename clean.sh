@@ -1,5 +1,6 @@
 #_deps
 rm -rf _deps/*
+rm -rf CMakeFiles
 
 #external
 rm -rf external/Makefile
