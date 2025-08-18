@@ -2,7 +2,7 @@
 A cmake build system for uWebSockets https://github.com/uNetworking/uWebSockets
 
 # Boilerplate
-This repository provides a cmake build system for uWebSockets and is compatible with v20.72.0
+This repository provides a cmake build system for uWebSockets and is compatible with v20.74.0
 
 You can extend this and build your own c++/c programs if you edit the CMakeLists.txt in the root of the repo.
 
