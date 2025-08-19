@@ -5,7 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ExternalProject_Add(boringssl_externalproject
         GIT_REPOSITORY https://github.com/google/boringssl
-        GIT_TAG 0.20250807
+        GIT_TAG 0.20250807.0
         GIT_SHALLOW ON
         SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/boringssl/source
         BINARY_DIR ${CMAKE_SOURCE_DIR}/external/boringssl/bin
