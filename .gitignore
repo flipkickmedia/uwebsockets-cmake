@@ -50,3 +50,5 @@ Server
 /external/libuv/libuv_externalproject-prefix
 /external/lsquic/lsquic_externalproject-prefix
 /external/zlib/zlib_externalproject-prefix
+/external/zlib/source
+
