@@ -10,7 +10,7 @@ int main() {
          .message = [](/* auto *ws, auto message */) {},
          .close = [](/*auto *ws*/) { std::cout << "bye" << std::endl; }});
 
-    app.connect("ws://localhost:3000", "protocol");
+    app.connect("wss://localhost:9001", "protocol");
 
     app.run();
 }
