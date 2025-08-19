@@ -1,6 +1,7 @@
 #_deps
 rm -rf _deps/*
 rm -rf CMakeFiles
+rm -rf CMakeCache.txt
 
 #external
 rm -rf external/Makefile
