@@ -1,7 +1,10 @@
 #_deps
-rm -rf _deps/*
+rm -rf _deps
 rm -rf CMakeFiles
 rm -rf CMakeCache.txt
+rm -rf cmake-build-debug
+rm -rf cmake-build-release
+rm -rf Makefile
 
 #external
 rm -rf external/Makefile
