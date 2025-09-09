@@ -21,3 +21,13 @@ To build the repository change directory to the root of the repository and run:
 cmake . -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
+# Running
+Depending on your system, youll need to install a few packages to allow ./Server to run:
+
+```shell
+sudo apt-get install --only-upgrade libstdc++6
+```
+
+```shell
+sudo ./Server
+```
