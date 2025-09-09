@@ -12,7 +12,7 @@ ExternalProject_Add(libuv_externalproject
         CONFIGURE_COMMAND ${CMAKE_COMMAND}
         ../source
         -DCMAKE_BUILD_TYPE=Release
-        BUILD_COMMAND ${CMAKE_COMMAND} --build ../bin
+        BUILD_COMMAND ${CMAKE_COMMAND} --build ../bin --target uv uv_a
         INSTALL_COMMAND ""
         TEST_COMMAND ""
         BUILD_BYPRODUCTS ${CMAKE_SOURCE_DIR}/external/libuv/bin/libuv.so

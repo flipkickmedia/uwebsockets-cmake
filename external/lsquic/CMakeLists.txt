@@ -5,11 +5,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ExternalProject_Add(lsquic_externalproject
         GIT_REPOSITORY https://github.com/litespeedtech/lsquic.git
-        GIT_TAG v4.3.0
+        GIT_TAG master
         GIT_SHALLOW ON
         SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/lsquic/source
         BINARY_DIR  ${CMAKE_SOURCE_DIR}/external/lsquic/bin
-        CONFIGURE_COMMAND BORINGSSL=${CMAKE_SOURCE_DIR}/external/boringssl/source
+        CONFIGURE_COMMAND BORINGSSL=${CMAKE_SOURCE_DIR}/external/boringssl/bin
         ${CMAKE_COMMAND}
         -DBUILD_SHARED_LIBS=1
         -DBORINGSSL_DIR=${CMAKE_SOURCE_DIR}/external/boringssl/source
@@ -18,12 +18,11 @@ ExternalProject_Add(lsquic_externalproject
         -DBORINGSSL_LIB_crypto=${CMAKE_SOURCE_DIR}/external/boringssl/bin/libcrypto.so
         -DZLIB_INCLUDE_DIR=${CMAKE_SOURCE_DIR}/external/zlib/source
         -DZLIB_LIB=${CMAKE_SOURCE_DIR}/external/zlib/bin/libz.so
-#        -DEVENT_INCLUDE_DIR=${LIBEVENT_INCLUDE_DIR};
-#        -DEVENT_LIB=${CMAKE_SOURCE_DIR}/external/libevent/bin/lib/libevent.so
+        -DEVENT_LIB=${CMAKE_SOURCE_DIR}/external/libevent/bin/lib/libevent.so
         -DCMAKE_BUILD_TYPE=Release
         ../source
         CMAKE_ARGS -DCMAKE_PROJECT_lsquic_externalproject_INCLUDE=${CMAKE_SOURCE_DIR}/external/lsquic/cmake/fix_lsquic_externalproject.cmake
-        BUILD_COMMAND ${CMAKE_COMMAND} --build ../bin
+        BUILD_COMMAND ${CMAKE_COMMAND} --build ../bin --target lsquic
         INSTALL_COMMAND ""
         TEST_COMMAND ""
         BUILD_BYPRODUCTS ${CMAKE_SOURCE_DIR}/external/lsquic/bin/lsquic.so
