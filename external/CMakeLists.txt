@@ -1,4 +1,4 @@
-# $ROOT/external/Findlsquic.cmake
+# $ROOT/external/CMakeLists.txt
 add_subdirectory(zlib)
 add_subdirectory(libuv)
 add_subdirectory(liburing)
@@ -7,7 +7,3 @@ add_subdirectory(libevent)
 add_subdirectory(lsquic)
 add_subdirectory(uSockets)
 add_subdirectory(uWebSockets)
-
-
-
-

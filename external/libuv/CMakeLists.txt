@@ -9,13 +9,15 @@ ExternalProject_Add(libuv_externalproject
         GIT_SHALLOW ON
         SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/libuv/source
         BINARY_DIR ${CMAKE_SOURCE_DIR}/external/libuv/bin
+        INSTALL_DIR ${CMAKE_SOURCE_DIR}/external/libuv/install
         CONFIGURE_COMMAND ${CMAKE_COMMAND}
-        ../source
         -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/external/libuv/install
+        ../source
         BUILD_COMMAND ${CMAKE_COMMAND} --build ../bin --target uv uv_a
-        INSTALL_COMMAND ""
+        INSTALL_COMMAND ${CMAKE_COMMAND} --install ../bin --prefix=${CMAKE_SOURCE_DIR}/external/libuv/install
         TEST_COMMAND ""
-        BUILD_BYPRODUCTS ${CMAKE_SOURCE_DIR}/external/libuv/bin/libuv.so
+        BUILD_BYPRODUCTS ${CMAKE_SOURCE_DIR}/external/libuv/install/lib/libuv.so
         USES_TERMINAL_DOWNLOAD true
         USES_TERMINAL_UPDATE true
         USES_TERMINAL_PATCH true
@@ -26,6 +28,8 @@ ExternalProject_Add(libuv_externalproject
 )
 ExternalProject_Get_Property(libuv_externalproject SOURCE_DIR)
 ExternalProject_Get_Property(libuv_externalproject BINARY_DIR)
+ExternalProject_Get_Property(libuv_externalproject INSTALL_DIR)
+file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
 #set(LIBUV_INCLUDE  ${SOURCE_DIR}/include PARENT_SCOPE)
 #set(LIBUV_LIBRARY  ${BINARY_DIR}/libuv.a PARENT_SCOPE)
 add_library(libuv SHARED IMPORTED GLOBAL)
@@ -33,7 +37,8 @@ target_include_directories(libuv INTERFACE ${SOURCE_DIR}/src)
 #this is one way
 #target_link_libraries(libuv INTERFACE ${BINARY_DIR}/libuv.so)
 #to do the same thing as this
+file(MAKE_DIRECTORY ${SOURCE_DIR}/include)
 set_target_properties (libuv PROPERTIES
-        IMPORTED_LOCATION ${BINARY_DIR}/libuv.so
-        INTERFACE_INCLUDE_DIRECTORIES ${SOURCE_DIR}/include
+        IMPORTED_LOCATION ${INSTALL_DIR}/lib/libuv.so
+        INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include
 )

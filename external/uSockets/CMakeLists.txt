@@ -17,5 +17,12 @@ file(GLOB_RECURSE SOURCES ${usockets_content_SOURCE_DIR}/src/*.c ${usockets_cont
 add_library(uSockets ${SOURCES})
 add_dependencies(uSockets lsquic_externalproject boringssl_externalproject)
 target_include_directories(uSockets PUBLIC lsquic ${usockets_content_SOURCE_DIR}/src ${usockets_content_SOURCE_DIR}/src/eventing ${usockets_content_SOURCE_DIR}/src/crypto ${usockets_content_SOURCE_DIR}/src/internal/eventing ${usockets_content_SOURCE_DIR}/src/internal/networking ${BORINGSSL_INCLUDE_DIR} ${LSQUIC_INCLUDE_DIR} ${LIBURING_INCLUDE_DIR})
-target_link_libraries(uSockets lsquic ${BORINGSSL_LIB_SSL} ${BORINGSSL_LIB_CRYPTO})
-target_compile_definitions(uSockets PRIVATE LIBUS_USE_OPENSSL LIBUS_USE_QUIC ) #LIBUS_USE_IO_URING
+target_link_libraries(uSockets
+        lsquic
+        ${BORINGSSL_LIB_SSL}
+        ${BORINGSSL_LIB_CRYPTO}
+)
+target_compile_definitions(uSockets PRIVATE
+        LIBUS_USE_OPENSSL
+        LIBUS_USE_QUIC
+        WITH_IO_URING)

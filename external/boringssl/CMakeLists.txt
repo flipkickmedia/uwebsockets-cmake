@@ -9,11 +9,18 @@ ExternalProject_Add(boringssl_externalproject
         GIT_SHALLOW ON
         SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/boringssl/source
         BINARY_DIR ${CMAKE_SOURCE_DIR}/external/boringssl/bin
-        CONFIGURE_COMMAND ${CMAKE_COMMAND} ../source -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release
+        INSTALL_DIR ${CMAKE_SOURCE_DIR}/external/boringssl/install
+        CONFIGURE_COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_CXX_STANDARD=17
+        #-DBUILD_SHARED_LIBS=1
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/external/boringssl/install
+        ../source
         BUILD_COMMAND ${CMAKE_COMMAND} --build . --target ssl crypto
-        INSTALL_COMMAND ""
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         TEST_COMMAND ""
-        BUILD_BYPRODUCTS ${CMAKE_SOURCE_DIR}/external/boringssl/bin/libssl.so ${CMAKE_SOURCE_DIR}/external/boringssl/bin/libcrypto.so
+        BUILD_BYPRODUCTS ${CMAKE_SOURCE_DIR}/external/boringssl/install/lib/libssl.a
+        BUILD_BYPRODUCTS ${CMAKE_SOURCE_DIR}/external/boringssl/install/lib/libcrypto.a
         USES_TERMINAL_DOWNLOAD true
         USES_TERMINAL_UPDATE true
         USES_TERMINAL_PATCH true
@@ -24,14 +31,16 @@ ExternalProject_Add(boringssl_externalproject
 )
 ExternalProject_Get_Property(boringssl_externalproject SOURCE_DIR)
 ExternalProject_Get_Property(boringssl_externalproject BINARY_DIR)
-set(BORINGSSL_INCLUDE  ${SOURCE_DIR}/include PARENT_SCOPE)
-set(BORINGSSL_INCLUDE_DIR  ${SOURCE_DIR}/include PARENT_SCOPE)
-set(BORINGSSL_LIB_SSL  ${BINARY_DIR}/libssl.so PARENT_SCOPE)
-set(BORINGSSL_LIB_CRYPTO  ${BINARY_DIR}/libcrypto.so PARENT_SCOPE)
+ExternalProject_Get_Property(boringssl_externalproject INSTALL_DIR)
+set(BORINGSSL_INCLUDE  ${INSTALL_DIR}/include PARENT_SCOPE)
+set(BORINGSSL_INCLUDE_DIR  ${INSTALL_DIR}/include PARENT_SCOPE)
+set(BORINGSSL_LIB_SSL  ${INSTALL_DIR}/lib/libssl.a PARENT_SCOPE)
+set(BORINGSSL_LIB_CRYPTO  ${INSTALL_DIR}/lib/libcrypto.a PARENT_SCOPE)
+
 add_library(boringssl_ssl SHARED IMPORTED)
+target_include_directories(boringssl_ssl INTERFACE ${INSTALL_DIR}/include)
+target_link_libraries(boringssl_ssl INTERFACE ${INSTALL_DIR}/lib/libssl.a)
+
 add_library(boringssl_crypto SHARED IMPORTED)
-target_include_directories(boringssl_ssl INTERFACE ${SOURCE_DIR}/src)
-target_include_directories(boringssl_crypto INTERFACE ${SOURCE_DIR}/src)
-target_link_libraries(boringssl_ssl INTERFACE ${BINARY_DIR}/libssl.so)
-target_link_libraries(boringssl_crypto INTERFACE ${BINARY_DIR}/libcrypto.so)
-#set_target_properties(boringssl INTERFACE ${SOURCE_DIR}/build/libcrypto.a ${SOURCE_DIR}/build/libssl.a)
+target_include_directories(boringssl_crypto INTERFACE ${INSTALL_DIR}/include/src)
+target_link_libraries(boringssl_crypto INTERFACE ${INSTALL_DIR}/lib/libcrypto.so)
