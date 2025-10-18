@@ -1,5 +1,5 @@
 #_deps
-rm -rf _deps
+rm -rf build
 rm -rf CMakeFiles
 rm -rf CMakeCache.txt
 rm -rf cmake-build-debug
