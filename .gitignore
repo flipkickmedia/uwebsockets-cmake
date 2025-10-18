@@ -59,3 +59,5 @@ Server
 /external/lsquic/source/
 /external/uSockets/bin/
 /external/uSockets/source/
+/external/uWebSockets/bin/
+/external/uWebSockets/source/
