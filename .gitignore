@@ -61,3 +61,6 @@ Server
 /external/uSockets/source/
 /external/uWebSockets/bin/
 /external/uWebSockets/source/
+/external/zlib/bin/
+/external/zlib/install/
+/external/zlib/source/
