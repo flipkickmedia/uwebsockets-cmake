@@ -15,6 +15,5 @@ add_dependencies(Server
         libevent_externalproject
         lsquic_externalproject
         liburing_externalproject
-        libuv_externalproject
         boringssl_externalproject
 )
