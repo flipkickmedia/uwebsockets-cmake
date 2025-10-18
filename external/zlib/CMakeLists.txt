@@ -37,11 +37,12 @@ ExternalProject_Get_Property(zlib_externalproject BINARY_DIR)
 ExternalProject_Get_Property(zlib_externalproject INSTALL_DIR)
 set(ZLIB_INCLUDE_DIR ${INSTALL_DIR}/include PARENT_SCOPE)
 set(ZLIB_LIBRARY ${INSTALL_DIR}/lib/libz.a PARENT_SCOPE)
-add_library(zlib STATIC IMPORTED)
+add_library(zlib STATIC IMPORTED GLOBAL)
 #target_include_directories(zlib INTERFACE ${SOURCE_DIR}/src)
 #target_link_libraries(zlib INTERFACE ${BINARY_DIR}/libz.so)
+file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
 set_target_properties(zlib PROPERTIES
         IMPORTED_LOCATION ${INSTALL_DIR}/lib/libz.a
         INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include
-        INTERFACE_LINK_DIRECTORIES ${INSTALL_DIR}/lib
 )
+add_dependencies(zlib zlib_externalproject)
