@@ -148,9 +148,4 @@ ExternalProject_Add(protobuf_c_externalproject
 add_library(protobuf-c INTERFACE)
 target_include_directories(protobuf-c INTERFACE ${PROTOBUFC_INSTALL}/include)
 target_link_libraries(protobuf-c INTERFACE ${PROTOBUFC_INSTALL}/lib/libprotobuf-c.a)
-
 add_dependencies(protobuf-c protobuf_c_externalproject)
-
-# Export variables
-set(PROTOBUFC_INCLUDE_DIR ${PROTOBUFC_INSTALL}/include PARENT_SCOPE)
-set(PROTOBUFC_LIBRARY ${PROTOBUFC_INSTALL}/lib/libprotobuf-c.a PARENT_SCOPE)
