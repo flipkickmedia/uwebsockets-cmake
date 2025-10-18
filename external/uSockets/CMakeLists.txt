@@ -9,20 +9,44 @@ FetchContent_Declare(
         GIT_TAG v0.8.8
         GIT_SHALLOW ON
         GIT_SUBMODULES ""
-        SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/uSockets/source
+        SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/uSockets/source
         BINARY_DIR ${CMAKE_SOURCE_DIR}/external/uSockets/bin
 )
 FetchContent_MakeAvailable(uSockets_content)
-file(GLOB_RECURSE SOURCES ${usockets_content_SOURCE_DIR}/src/*.c ${usockets_content_SOURCE_DIR}/src/eventing/*.c ${usockets_content_SOURCE_DIR}/src/crypto/*.c ${usockets_content_SOURCE_DIR}/src/crypto/*.cpp ${usockets_content_SOURCE_DIR}/src/internal/eventing/* ${usockets_content_SOURCE_DIR}/src/internal/networking/*)
+file(GLOB_RECURSE SOURCES
+        ${usockets_content_SOURCE_DIR}/src/*.c
+        ${usockets_content_SOURCE_DIR}/src/eventing/*.c
+        ${usockets_content_SOURCE_DIR}/src/crypto/*.c
+        ${usockets_content_SOURCE_DIR}/src/crypto/*.cpp
+        ${usockets_content_SOURCE_DIR}/src/internal/eventing/*
+        ${usockets_content_SOURCE_DIR}/src/internal/networking/*
+)
 add_library(uSockets ${SOURCES})
-add_dependencies(uSockets lsquic_externalproject boringssl_externalproject)
-target_include_directories(uSockets PUBLIC lsquic ${usockets_content_SOURCE_DIR}/src ${usockets_content_SOURCE_DIR}/src/eventing ${usockets_content_SOURCE_DIR}/src/crypto ${usockets_content_SOURCE_DIR}/src/internal/eventing ${usockets_content_SOURCE_DIR}/src/internal/networking ${BORINGSSL_INCLUDE_DIR} ${LSQUIC_INCLUDE_DIR} ${LIBURING_INCLUDE_DIR})
+add_dependencies(uSockets
+        lsquic_externalproject
+        boringssl_externalproject
+        liburing_externalproject
+)
+target_include_directories(uSockets
+        PUBLIC
+        lsquic
+        ${usockets_content_SOURCE_DIR}/src
+        ${usockets_content_SOURCE_DIR}/src/eventing
+        ${usockets_content_SOURCE_DIR}/src/crypto
+        ${usockets_content_SOURCE_DIR}/src/internal/eventing
+        ${usockets_content_SOURCE_DIR}/src/internal/networking
+        ${BORINGSSL_INCLUDE_DIR}
+        ${LSQUIC_INCLUDE_DIR}
+)
 target_link_libraries(uSockets
         lsquic
+        liburing
         ${BORINGSSL_LIB_SSL}
         ${BORINGSSL_LIB_CRYPTO}
 )
 target_compile_definitions(uSockets PRIVATE
-        LIBUS_USE_OPENSSL
-        LIBUS_USE_QUIC
-        WITH_IO_URING)
+        WITH_BORINGSSL=1
+        LIBUS_USE_QUIC=1
+        LIBUS_USE_IO_URING=1
+        WITH_IO_URING=1
+)
