@@ -10,7 +10,39 @@
 /* This is a simple WebSocket echo server example.
  * You may compile it with "WITH_OPENSSL=1 make" or with "make" */
 
-uWS::App *globalApp;
+uWS::SSLApp *globalApp;
+
+/**
+ * Get the port number from an environment variable.
+ * Falls back to a default if unset or invalid.
+ */
+int get_port_from_env(const std::string& env_var_name, int default_port) {
+    const char* env_value = std::getenv(env_var_name.c_str());
+
+    if (!env_value) {
+        std::cerr << "[INFO] Environment variable " << env_var_name
+                  << " not set. Using default port " << default_port << ".\n";
+        return default_port;
+    }
+
+    try {
+        int port = std::stoi(env_value);
+
+        if (port < 1 || port > 65535) {
+            throw std::out_of_range("Port out of range");
+        }
+
+        std::cerr << "[INFO] Using port " << port
+                  << " from environment variable " << env_var_name << ".\n";
+        return port;
+    } catch (const std::exception& e) {
+        std::cerr << "[WARN] Invalid value for " << env_var_name
+                  << " ('" << env_value << "'): " << e.what()
+                  << ". Falling back to default port " << default_port << ".\n";
+        return default_port;
+    }
+}
+
 
 uint32_t crc32(const char *s, size_t n, uint32_t crc = 0xFFFFFFFF) {
 
@@ -29,22 +61,22 @@ uint32_t crc32(const char *s, size_t n, uint32_t crc = 0xFFFFFFFF) {
 
 //todo add check for cert files and exit if they are not found otherwise a segfault happens on
 int main() {
+
+    int port = get_port_from_env("SERVER_PORT", 900);
+
     /* ws->getUserData returns one of these */
     struct PerSocketData {
         /* Fill with user data */
     };
 
-    // uWS::SSLApp app = uWS::SSLApp({
-    //     /* There are example certificates in uWebSockets.js repo */
-    //     .key_file_name = "key.pem",
-    //     .cert_file_name = "cert.pem",
-    //     //.passphrase = "1234"
-    // })
-
-
     /* Keep in mind that uWS::SSLApp({options}) is the same as uWS::App() when compiled without SSL support.
      * You may swap to using uWS:App() if you don't need SSL */
-    uWS::App app = uWS::App().ws<PerSocketData>("/*", {
+    uWS::SSLApp app = uWS::SSLApp({
+        /* There are example certificates in uWebSockets.js repo */
+        .key_file_name = "../misc/key.pem",
+        .cert_file_name = "../misc/cert.pem",
+        .passphrase = "1234"
+    }).ws<PerSocketData>("/*", {
         /* Settings */
         .compression = uWS::SHARED_COMPRESSOR,
         .maxPayloadLength = 16 * 1024 * 1024,
@@ -60,7 +92,7 @@ int main() {
             ws->subscribe("broadcast");
         },
         .message = [&app](auto *ws, std::string_view message, uWS::OpCode opCode) {
-            int test = ws->send("test");
+            int test = ws->send(message);
         },
         .drain = [](auto */*ws*/) {
             /* Check ws->getBufferedAmount() here */
@@ -85,7 +117,7 @@ int main() {
 
         auto isAborted = std::make_shared<bool>(false);
         uint32_t crc = 0xFFFFFFFF;
-        res->onData([res, isAborted, crc](std::string_view chunk, bool isFin) mutable {
+        res->onData([res, isAborted, crc, req](std::string_view chunk, bool isFin) mutable {
             std::cout << " --- data:" << req->getUrl() << " --- " << std::endl;
             if (chunk.length()) {
                 crc = crc32(chunk.data(), chunk.length(), crc);
@@ -101,28 +133,28 @@ int main() {
         res->onAborted([isAborted]() {
             *isAborted = true;
         });
-    }).listen("127.0.0.1", 900, [](auto *listen_socket) {
+    }).listen("127.0.0.1", port, [&port](auto *listen_socket) {
         if (listen_socket) {
-            std::cout << "Listening on port " << 9001 << std::endl;
+            std::cout << "Listening on port " << port << std::endl;
         }
     });
 
-    struct us_loop_t *loop = (struct us_loop_t *) uWS::Loop::get();
-    struct us_timer_t *delayTimer = us_create_timer(loop, 0, 0);
-
-    // broadcast the unix time as millis every 8 millis
-    us_timer_set(delayTimer, [](struct us_timer_t */*t*/) {
-
-        struct timespec ts;
-        timespec_get(&ts, TIME_UTC);
-
-        int64_t millis = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-
-        //std::cout << "Broadcasting timestamp: " << millis << std::endl;
-
-        globalApp->publish("broadcast", std::string_view((char *) &millis, sizeof(millis)), uWS::OpCode::BINARY, false);
-
-    }, 8, 8);
+    // struct us_loop_t *loop = (struct us_loop_t *) uWS::Loop::get();
+    // struct us_timer_t *delayTimer = us_create_timer(loop, 0, 0);
+    //
+    // // broadcast the unix time as millis every 8 millis
+    // us_timer_set(delayTimer, [](struct us_timer_t */*t*/) {
+    //
+    //     struct timespec ts;
+    //     timespec_get(&ts, TIME_UTC);
+    //
+    //     int64_t millis = ts.tv_sec * 10000 + ts.tv_nsec / 1000000;
+    //
+    //     //std::cout << "Broadcasting timestamp: " << millis << std::endl;
+    //
+    //     globalApp->publish("broadcast", std::string_view((char *) &millis, sizeof(millis)), uWS::OpCode::BINARY, false);
+    //
+    // }, 8, 8);
 
     globalApp = &app;
 
