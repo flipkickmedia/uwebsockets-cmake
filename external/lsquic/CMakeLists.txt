@@ -1,58 +1,69 @@
-# $ROOT/external/libuv/Findlsquic.cmake
 cmake_minimum_required(VERSION 3.24)
+project(LsquicExternalProject LANGUAGES C CXX)
+
 include(ExternalProject)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ExternalProject_Add(lsquic_externalproject
         GIT_REPOSITORY https://github.com/litespeedtech/lsquic.git
-        GIT_TAG v4.3.0
-        GIT_SHALLOW ON
-        SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/lsquic/source
-        BINARY_DIR  ${CMAKE_SOURCE_DIR}/external/lsquic/bin
-        INSTALL_DIR ${CMAKE_SOURCE_DIR}/external/lsquic/install
-        CONFIGURE_COMMAND ${CMAKE_COMMAND}
-        -DBUILD_SHARED_LIBS=1
+        GIT_TAG        v4.3.0
+        GIT_SHALLOW    ON
+
+        SOURCE_DIR     ${CMAKE_SOURCE_DIR}/external/lsquic/source
+        BINARY_DIR     ${CMAKE_SOURCE_DIR}/external/lsquic/bin
+        INSTALL_DIR    ${CMAKE_SOURCE_DIR}/external/lsquic/install
+
+        CONFIGURE_COMMAND
+        ${CMAKE_COMMAND}
+        -DBUILD_SHARED_LIBS=OFF
         -DCMAKE_CXX_STANDARD=17
         -DCMAKE_BUILD_TYPE=Release
         -DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/external/lsquic/install
+        # BoringSSL
         -DBORINGSSL_DIR=${CMAKE_SOURCE_DIR}/external/boringssl/install
-        -DBORINGSSL_INCLUDE=${CMAKE_SOURCE_DIR}/external/boringssl/install/include
-        -DBORINGSSL_LIB_ssl=${CMAKE_SOURCE_DIR}/external/boringssl/install/lib/libssl.a
-        -DBORINGSSL_LIB_crypto=${CMAKE_SOURCE_DIR}/external/boringssl/install/lib/libcrypto.a
+        # Zlib (paths expected by lsquic)
         -DZLIB_INCLUDE_DIR=${CMAKE_SOURCE_DIR}/external/zlib/install/include
         -DZLIB_LIB=${CMAKE_SOURCE_DIR}/external/zlib/install/lib/libz.a
-        -DEVENT_LIB=${CMAKE_SOURCE_DIR}/external/libevent/bin/lib/libevent.so
+        # libevent (static)
+        -DEVENT_LIB=${CMAKE_SOURCE_DIR}/external/libevent/install/lib/libevent.a
         ../source
-        #CMAKE_ARGS -DCMAKE_PROJECT_lsquic_externalproject_INCLUDE=${CMAKE_SOURCE_DIR}/external/lsquic/cmake/fix_lsquic_externalproject.cmake
-        BUILD_COMMAND ${CMAKE_COMMAND} --build ../bin --target lsquic
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build ../bin --target install
-        TEST_COMMAND ""
-        BUILD_BYPRODUCTS ${CMAKE_SOURCE_DIR}/external/lsquic/install/lib/lsquic.so
-        USES_TERMINAL_DOWNLOAD true
-        USES_TERMINAL_UPDATE true
-        USES_TERMINAL_PATCH true
-        USES_TERMINAL_CONFIGURE true
-        USES_TERMINAL_BUILD true
-        USES_TERMINAL_INSTALL true
-        USES_TERMINAL_TEST true
-        DEPENDS zlib_externalproject
-        DEPENDS boringssl_externalproject
-        DEPENDS libevent_externalproject
+
+        BUILD_COMMAND   ${CMAKE_COMMAND} --build . --target lsquic
+        INSTALL_COMMAND ${CMAKE_COMMAND} --install . --prefix=${CMAKE_SOURCE_DIR}/external/lsquic/install
+        TEST_COMMAND    ""
+
+        USES_TERMINAL_DOWNLOAD TRUE
+        USES_TERMINAL_UPDATE   TRUE
+        USES_TERMINAL_PATCH    TRUE
+        USES_TERMINAL_CONFIGURE TRUE
+        USES_TERMINAL_BUILD     TRUE
+        USES_TERMINAL_INSTALL   TRUE
+        USES_TERMINAL_TEST      TRUE
+
+        BUILD_BYPRODUCTS
+        ${CMAKE_SOURCE_DIR}/external/lsquic/install/lib/liblsquic.a
+
+        DEPENDS
+        zlib_externalproject
+        boringssl_externalproject
+        libevent_externalproject
 )
-ExternalProject_Get_Property(lsquic_externalproject SOURCE_DIR)
-ExternalProject_Get_Property(lsquic_externalproject BINARY_DIR)
-ExternalProject_Get_Property(lsquic_externalproject INSTALL_DIR)
-#set options
-set(WITH_BORINGSSL ${CMAKE_SOURCE_DIR}/external/boringssl/bin CACHE INTERNAL "path to boringssl" FORCE)
-set(LSQUIC_INCLUDE_DIR ${INSTALL_DIR}/include PARENT_SCOPE)
-set(LSQUIC_LIBRARY ${INSTALL_DIR}/lib/lsquic.so PARENT_SCOPE)
-add_library(lsquic INTERFACE)
-set_target_properties (lsquic PROPERTIES
-        IMPORTED_LOCATION ${LSQUIC_LIBRARY}
-        INTERFACE_INCLUDE_DIRECTORIES ${LSQUIC_INCLUDE_DIR}
+
+# Ensure include dir exists before first build
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/external/lsquic/install/include)
+
+# Export a modern imported STATIC target
+add_library(Lsquic::lsquic STATIC IMPORTED GLOBAL)
+set_target_properties(Lsquic::lsquic PROPERTIES
+        IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/external/lsquic/install/lib/liblsquic.a
+        INTERFACE_INCLUDE_DIRECTORIES
+        "${CMAKE_SOURCE_DIR}/external/lsquic/install/include;${CMAKE_SOURCE_DIR}/external/lsquic/install/include/lsquic"
 )
-target_include_directories(lsquic INTERFACE
-        ${INSTALL_DIR}/include/lsquic
-        ${ZLIB_INCLUDE_DIR}
-        ${LIBEVENT_INCLUDE_DIR}
+add_dependencies(Lsquic::lsquic lsquic_externalproject)
+
+# Propagate deps to consumers
+target_link_libraries(Lsquic::lsquic INTERFACE
+        BoringSSL::ssl
+        BoringSSL::crypto
+        Libevent::event
+        zlib
 )
