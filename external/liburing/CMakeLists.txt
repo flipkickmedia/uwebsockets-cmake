@@ -1,3 +1,4 @@
+# $ROOT/external/liburing/CMakeLists.txt
 cmake_minimum_required(VERSION 3.24)
 project(LiburingExternalProject LANGUAGES C CXX)
 
@@ -7,136 +8,143 @@ ProcessorCount(NPROC)
 if (NOT NPROC OR NPROC EQUAL 0)
     set(NPROC 1)
 endif()
-
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
-set(LIBURING_ROOT     ${CMAKE_SOURCE_DIR}/external/liburing)
-set(LIBURING_SOURCE   ${LIBURING_ROOT}/source)
-set(LIBURING_BUILD    ${LIBURING_ROOT}/build)
-set(LIBURING_INSTALL  ${LIBURING_ROOT}/install)
-set(LIBURING_SCRIPTS  ${LIBURING_ROOT}/scripts)
-file(MAKE_DIRECTORY ${LIBURING_SCRIPTS})
-
-set(LIBURING_REPO https://github.com/axboe/liburing.git)
-set(LIBURING_TAG  liburing-2.11)
-
-# A file that stores the last successfully built commit/tag
-set(LIBURING_VERSION_FILE ${LIBURING_BUILD}/last_built_version.txt)
-
-# ---------------------------------------------------------------------------
-# Helper: Bash-safe variable expansion
-# ---------------------------------------------------------------------------
 string(REPLACE ";" " " NPROC_STR "${NPROC}")
 
-# ---------------------------------------------------------------------------
-# configure.sh
-# ---------------------------------------------------------------------------
-file(WRITE ${LIBURING_SCRIPTS}/configure.sh
-        "#!/usr/bin/env bash
-set -e
+# -----------------------------------------------------------------------------
+# ExternalProject
+# -----------------------------------------------------------------------------
+ExternalProject_Add(liburing_externalproject
+        GIT_REPOSITORY https://github.com/axboe/liburing.git
+        GIT_TAG        master
+        GIT_SHALLOW    ON
 
-STAMP_FILE=\"${LIBURING_BUILD}/configured.stamp\"
-VERSION_FILE=\"${LIBURING_VERSION_FILE}\"
-CURRENT_VERSION=\"${LIBURING_TAG}\"
+        SOURCE_DIR     ${CMAKE_SOURCE_DIR}/external/liburing/source
+        BINARY_DIR     ${CMAKE_SOURCE_DIR}/external/liburing/build
+        INSTALL_DIR    ${CMAKE_SOURCE_DIR}/external/liburing/install
 
-# If the recorded version differs from the current one, force reconfigure
-if [ -f \"$VERSION_FILE\" ]; then
-  PREV_VERSION=\$(cat \"$VERSION_FILE\")
+        CONFIGURE_COMMAND bash ${CMAKE_SOURCE_DIR}/external/liburing/scripts/configure.sh
+        BUILD_COMMAND     bash ${CMAKE_SOURCE_DIR}/external/liburing/scripts/build.sh
+        INSTALL_COMMAND   bash ${CMAKE_SOURCE_DIR}/external/liburing/scripts/install.sh
+        TEST_COMMAND      ""
+
+        USES_TERMINAL_DOWNLOAD TRUE
+        USES_TERMINAL_UPDATE   TRUE
+        USES_TERMINAL_PATCH    TRUE
+        USES_TERMINAL_CONFIGURE TRUE
+        USES_TERMINAL_BUILD     TRUE
+        USES_TERMINAL_INSTALL   TRUE
+        USES_TERMINAL_TEST      TRUE
+
+        BUILD_BYPRODUCTS
+        ${CMAKE_SOURCE_DIR}/external/liburing/install/lib/liburing.a
+        ${CMAKE_SOURCE_DIR}/external/liburing/build/installed.stamp
+)
+
+# -----------------------------------------------------------------------------
+# Derive paths from ExternalProject properties
+# -----------------------------------------------------------------------------
+ExternalProject_Get_Property(liburing_externalproject INSTALL_DIR)
+ExternalProject_Get_Property(liburing_externalproject SOURCE_DIR)
+ExternalProject_Get_Property(liburing_externalproject BINARY_DIR)
+
+get_filename_component(ROOT "${INSTALL_DIR}" DIRECTORY)
+set(SCRIPTS "${ROOT}/scripts")
+file(MAKE_DIRECTORY "${SCRIPTS}")
+
+set(VERSION_FILE "${BINARY_DIR}/last_built_version.txt")
+
+# -----------------------------------------------------------------------------
+# Shell scripts (configure/build/install) – idempotent with stamps & version
+# -----------------------------------------------------------------------------
+file(WRITE "${SCRIPTS}/configure.sh" "
+#!/usr/bin/env bash
+set -euo pipefail
+
+STAMP_FILE='${BINARY_DIR}/configured.stamp'
+VERSION_FILE='${VERSION_FILE}'
+
+echo '[liburing] Configuring...'
+cd '${SOURCE_DIR}'
+
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  CURRENT_VERSION=\$(git rev-parse HEAD)
 else
-  PREV_VERSION=\"\"
+  CURRENT_VERSION='unknown'
 fi
 
-if [ -f \"$STAMP_FILE\" ] && [ \"\$PREV_VERSION\" == \"\$CURRENT_VERSION\" ]; then
-  echo \"[liburing] Already configured for version \$CURRENT_VERSION, skipping.\"
+PREV_VERSION=''
+if [ -f \"\$VERSION_FILE\" ]; then
+  PREV_VERSION=\$(cat \"\$VERSION_FILE\")
+fi
+
+# Version change => invalidate later stages
+if [ \"\$PREV_VERSION\" != \"\$CURRENT_VERSION\" ]; then
+  rm -f '${BINARY_DIR}/built.stamp' '${BINARY_DIR}/installed.stamp'
+fi
+
+if [ -f \"\$STAMP_FILE\" ] && [ \"\$PREV_VERSION\" = \"\$CURRENT_VERSION\" ]; then
+  echo \"[liburing] Already configured at \$CURRENT_VERSION, skipping.\"
   exit 0
 fi
 
-echo \"[liburing] Configuring liburing (\$CURRENT_VERSION)...\"
-cd \"${LIBURING_SOURCE}\"
-./configure --prefix=\"${LIBURING_INSTALL}\"
+./configure --prefix='${INSTALL_DIR}'
 
-echo \"\$CURRENT_VERSION\" > \"$VERSION_FILE\"
-touch \"$STAMP_FILE\"
+echo \"\$CURRENT_VERSION\" > \"\$VERSION_FILE\"
+touch \"\$STAMP_FILE\"
 ")
 
-# ---------------------------------------------------------------------------
-# build.sh
-# ---------------------------------------------------------------------------
-file(WRITE ${LIBURING_SCRIPTS}/build.sh
-        "#!/usr/bin/env bash
-set -e
-STAMP_FILE=\"${LIBURING_BUILD}/built.stamp\"
+file(WRITE "${SCRIPTS}/build.sh" "
+#!/usr/bin/env bash
+set -euo pipefail
+STAMP_FILE='${BINARY_DIR}/built.stamp'
 
-if [ -f \"$STAMP_FILE\" ]; then
-  echo \"[liburing] Already built, skipping.\"
+if [ -f \"\$STAMP_FILE\" ]; then
+  echo '[liburing] Already built, skipping.'
   exit 0
 fi
 
-echo \"[liburing] Building liburing...\"
-cd \"${LIBURING_SOURCE}\"
+echo '[liburing] Building...'
+cd '${SOURCE_DIR}'
 make -j${NPROC_STR}
 
-touch \"$STAMP_FILE\"
+touch \"\$STAMP_FILE\"
 ")
 
-# ---------------------------------------------------------------------------
-# install.sh
-# ---------------------------------------------------------------------------
-file(WRITE ${LIBURING_SCRIPTS}/install.sh
-        "#!/usr/bin/env bash
-set -e
-STAMP_FILE=\"${LIBURING_BUILD}/installed.stamp\"
+file(WRITE "${SCRIPTS}/install.sh" "
+#!/usr/bin/env bash
+set -euo pipefail
+STAMP_FILE='${BINARY_DIR}/installed.stamp'
 
-if [ -f \"$STAMP_FILE\" ]; then
-  echo \"[liburing] Already installed, skipping.\"
+if [ -f \"\$STAMP_FILE\" ]; then
+  echo '[liburing] Already installed, skipping.'
   exit 0
 fi
 
-echo \"[liburing] Installing liburing...\"
-cd \"${LIBURING_SOURCE}\"
+echo '[liburing] Installing...'
+cd '${SOURCE_DIR}'
 make install
 
-touch \"$STAMP_FILE\"
+touch \"\$STAMP_FILE\"
 ")
 
 # Make scripts executable
-file(GLOB SCRIPT_FILES ${LIBURING_SCRIPTS}/*.sh)
-foreach(script ${SCRIPT_FILES})
-    file(COPY ${script} DESTINATION ${LIBURING_SCRIPTS}
-            FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
-endforeach()
+file(GLOB SCRIPT_FILES "${SCRIPTS}/*.sh")
+if(SCRIPT_FILES)
+    file(CHMOD ${SCRIPT_FILES}
+            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE)
+endif()
 
-# ---------------------------------------------------------------------------
-# ExternalProject_Add
-# ---------------------------------------------------------------------------
-ExternalProject_Add(liburing_externalproject
-        GIT_REPOSITORY ${LIBURING_REPO}
-        GIT_TAG        ${LIBURING_TAG}
-        GIT_SHALLOW    ON
+# -----------------------------------------------------------------------------
+# Modern imported target for consumers
+# -----------------------------------------------------------------------------
+add_library(Liburing::uring STATIC IMPORTED GLOBAL)
+# Avoid include-dir warning at configure time
+file(MAKE_DIRECTORY "${INSTALL_DIR}/include")
 
-        SOURCE_DIR     ${LIBURING_SOURCE}
-        BINARY_DIR     ${LIBURING_BUILD}
-        INSTALL_DIR    ${LIBURING_INSTALL}
-
-        CONFIGURE_COMMAND bash ${LIBURING_SCRIPTS}/configure.sh
-        BUILD_COMMAND     bash ${LIBURING_SCRIPTS}/build.sh
-        INSTALL_COMMAND   bash ${LIBURING_SCRIPTS}/install.sh
-
-        BUILD_BYPRODUCTS
-        ${LIBURING_INSTALL}/lib/liburing.a
-        ${LIBURING_BUILD}/installed.stamp
-
-        USES_TERMINAL_DOWNLOAD YES
-        USES_TERMINAL_CONFIGURE YES
-        USES_TERMINAL_BUILD YES
-        USES_TERMINAL_INSTALL YES
+set_target_properties(Liburing::uring PROPERTIES
+        IMPORTED_LOCATION "${INSTALL_DIR}/lib/liburing.a"
 )
-
-# ---------------------------------------------------------------------------
-# CMake interface library
-# ---------------------------------------------------------------------------
-add_library(liburing INTERFACE)
-target_include_directories(liburing INTERFACE ${LIBURING_INSTALL}/include)
-target_link_libraries(liburing INTERFACE ${LIBURING_INSTALL}/lib/liburing.a)
-add_dependencies(liburing liburing_externalproject)
+target_include_directories(Liburing::uring INTERFACE "${INSTALL_DIR}/include")
+add_dependencies(Liburing::uring liburing_externalproject)
