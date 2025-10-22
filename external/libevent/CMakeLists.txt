@@ -1,35 +1,47 @@
 # $ROOT/external/libevent/CMakeLists.txt
 cmake_minimum_required(VERSION 3.24)
+
 include(ExternalProject)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ExternalProject_Add(libevent_externalproject
         GIT_REPOSITORY https://github.com/libevent/libevent.git
-        GIT_TAG master
-        GIT_SHALLOW ON
-        SOURCE_DIR  ${CMAKE_SOURCE_DIR}/external/libevent/source
-        BINARY_DIR ${CMAKE_SOURCE_DIR}/external/libevent/bin
-        CONFIGURE_COMMAND ${CMAKE_COMMAND}
-        ../source
+        GIT_TAG        master
+        GIT_SHALLOW    ON
+        SOURCE_DIR     ${CMAKE_SOURCE_DIR}/external/libevent/source
+        BINARY_DIR     ${CMAKE_SOURCE_DIR}/external/libevent/bin
+        INSTALL_DIR    ${CMAKE_SOURCE_DIR}/external/libevent/install
+        CONFIGURE_COMMAND
+        ${CMAKE_COMMAND}
+        -S ${CMAKE_SOURCE_DIR}/external/libevent/source
+        -B ${CMAKE_SOURCE_DIR}/external/libevent/bin
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/external/libevent/install
+        # libevent's CMake supports Zlib via these cache vars:
         -DZLIB_INCLUDE_DIR=${CMAKE_SOURCE_DIR}/external/zlib/source
         -DZLIB_LIBRARY=${CMAKE_SOURCE_DIR}/external/zlib/bin/libz.so
-        -DCMAKE_BUILD_TYPE=Release
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
-        INSTALL_COMMAND ""
-        TEST_COMMAND ""
-        USES_TERMINAL_DOWNLOAD true
-        USES_TERMINAL_UPDATE true
-        USES_TERMINAL_PATCH true
-        USES_TERMINAL_CONFIGURE true
-        USES_TERMINAL_BUILD true
-        USES_TERMINAL_INSTALL true
-        USES_TERMINAL_TEST true
+        BUILD_COMMAND   ${CMAKE_COMMAND} --build ${CMAKE_SOURCE_DIR}/external/libevent/bin
+        INSTALL_COMMAND ${CMAKE_COMMAND} --install ${CMAKE_SOURCE_DIR}/external/libevent/bin --prefix=${CMAKE_SOURCE_DIR}/external/libevent/install
+        TEST_COMMAND    ""
+        USES_TERMINAL_DOWNLOAD TRUE
+        USES_TERMINAL_UPDATE   TRUE
+        USES_TERMINAL_PATCH    TRUE
+        USES_TERMINAL_CONFIGURE TRUE
+        USES_TERMINAL_BUILD     TRUE
+        USES_TERMINAL_INSTALL   TRUE
+        USES_TERMINAL_TEST      TRUE
         DEPENDS zlib_externalproject
+        BUILD_BYPRODUCTS
+        ${CMAKE_SOURCE_DIR}/external/libevent/install/lib/libevent.a
 )
-ExternalProject_Get_Property(libevent_externalproject SOURCE_DIR)
-ExternalProject_Get_Property(libevent_externalproject BINARY_DIR)
-set(LIBEVENT_INCLUDE_DIR "${SOURCE_DIR}/include;${BINARY_DIR}/include" PARENT_SCOPE)
-set(LIBEVENT_LIBRARY  ${BINARY_DIR}/libevent.a PARENT_SCOPE)
-add_library(libevent INTERFACE)
-target_include_directories(libevent INTERFACE ${SOURCE_DIR}/include)
-target_link_libraries(libevent INTERFACE ${BINARY_DIR}/libevent.pc)
+
+# Pull the install dir from the ExternalProject (no hand-rolled vars exported)
+ExternalProject_Get_Property(libevent_externalproject INSTALL_DIR)
+
+# Provide a proper imported target that dependents can link against.
+# This target carries include dirs and the archive path via properties.
+add_library(Libevent::event STATIC IMPORTED GLOBAL)
+set_target_properties(Libevent::event PROPERTIES
+        IMPORTED_LOCATION             "${INSTALL_DIR}/lib/libevent.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
+)
+add_dependencies(Libevent::event libevent_externalproject)
