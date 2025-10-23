@@ -23,9 +23,14 @@ ExternalProject_Add(boringssl_externalproject
         BUILD_COMMAND
         ${CMAKE_COMMAND} --build . --target ssl crypto
 
-        # Use BoringSSL's CMake install target
+        # Manual "install": copy libs and public headers to INSTALL_DIR
         INSTALL_COMMAND
-        ${CMAKE_COMMAND} --install . --prefix=${CMAKE_SOURCE_DIR}/external/boringssl/install
+        ${CMAKE_COMMAND} -E make_directory <INSTALL_DIR>/lib
+        COMMAND ${CMAKE_COMMAND} -E make_directory <INSTALL_DIR>/include
+        COMMAND ${CMAKE_COMMAND} -E copy          <BINARY_DIR>/ssl/libssl.a     <INSTALL_DIR>/lib/libssl.a
+        COMMAND ${CMAKE_COMMAND} -E copy          <BINARY_DIR>/crypto/libcrypto.a <INSTALL_DIR>/lib/libcrypto.a
+        COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include          <INSTALL_DIR>/include
+
 
         TEST_COMMAND ""
 
