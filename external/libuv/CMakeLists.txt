@@ -36,7 +36,7 @@ ExternalProject_Add(libuv_externalproject
 
         BUILD_BYPRODUCTS
         ${CMAKE_SOURCE_DIR}/external/libuv/install/lib/libuv.so
-        ${CMAKE_SOURCE_DIR}/external/libuv/install/lib/libuv_a.a
+        ${CMAKE_SOURCE_DIR}/external/libuv/install/lib/libuv.a
 )
 
 # Ensure include dir exists to avoid configure-time warnings
@@ -51,9 +51,13 @@ set_target_properties(Libuv::uv PROPERTIES
 add_dependencies(Libuv::uv libuv_externalproject)
 
 # Imported STATIC target
+find_package(Threads REQUIRED)
 add_library(Libuv::uv_a STATIC IMPORTED GLOBAL)
 set_target_properties(Libuv::uv_a PROPERTIES
-        IMPORTED_LOCATION             ${CMAKE_SOURCE_DIR}/external/libuv/install/lib/libuv_a.a
+        IMPORTED_LOCATION             ${CMAKE_SOURCE_DIR}/external/libuv/install/lib/libuv.a
         INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/external/libuv/install/include
+        INTERFACE_LINK_LIBRARIES      "Threads::Threads;dl"
 )
+# libuv static needs pthread and dl on Linux
+target_link_libraries(Libuv::uv_a INTERFACE Threads::Threads dl)
 add_dependencies(Libuv::uv_a libuv_externalproject)
