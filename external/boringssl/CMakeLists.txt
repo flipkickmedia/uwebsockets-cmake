@@ -44,7 +44,7 @@ ExternalProject_Add(boringssl_externalproject
 
 # Get the ExternalProject's computed install dir
 ExternalProject_Get_Property(boringssl_externalproject INSTALL_DIR)
-
+file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
 # Imported targets for consumers
 find_package(Threads REQUIRED)
 
