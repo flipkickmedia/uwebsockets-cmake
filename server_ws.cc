@@ -74,7 +74,7 @@ int main() {
     uWS::SSLApp app = uWS::SSLApp({
         /* There are example certificates in uWebSockets.js repo */
         .key_file_name = "../misc/privkey.pem",
-        .cert_file_name = "../misc/cert.pem",
+        .cert_file_name = "../misc/fullchain.pem",
         .passphrase = "1234"
     }).ws<PerSocketData>("/*", {
         /* Settings */
@@ -138,7 +138,7 @@ int main() {
             std::cout << "Listening on port " << port << std::endl;
         }
     });
-
+    //
     // struct us_loop_t *loop = (struct us_loop_t *) uWS::Loop::get();
     // struct us_timer_t *delayTimer = us_create_timer(loop, 0, 0);
     //
@@ -148,15 +148,15 @@ int main() {
     //     struct timespec ts;
     //     timespec_get(&ts, TIME_UTC);
     //
-    //     int64_t millis = ts.tv_sec * 10000 + ts.tv_nsec / 1000000;
+    //     int64_t millis = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
     //
     //     //std::cout << "Broadcasting timestamp: " << millis << std::endl;
     //
     //     globalApp->publish("broadcast", std::string_view((char *) &millis, sizeof(millis)), uWS::OpCode::BINARY, false);
     //
     // }, 8, 8);
-
-    globalApp = &app;
-
+    //
+    //globalApp = &app;
     app.run();
 }
+
