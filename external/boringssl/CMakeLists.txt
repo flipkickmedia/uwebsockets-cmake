@@ -23,12 +23,13 @@ ExternalProject_Add(boringssl_externalproject
         BUILD_COMMAND
         ${CMAKE_COMMAND} --build . --target ssl crypto
 
-        # Manual "install": copy libs and public headers to INSTALL_DIR
+        # Manual "install": copy libs and public headers to INSTALL_DIR - cmake --install borks because we only compiled
+        # specific targets
         INSTALL_COMMAND
         ${CMAKE_COMMAND} -E make_directory <INSTALL_DIR>/lib
         COMMAND ${CMAKE_COMMAND} -E make_directory <INSTALL_DIR>/include
-        COMMAND ${CMAKE_COMMAND} -E copy          <BINARY_DIR>/ssl/libssl.a     <INSTALL_DIR>/lib/libssl.a
-        COMMAND ${CMAKE_COMMAND} -E copy          <BINARY_DIR>/crypto/libcrypto.a <INSTALL_DIR>/lib/libcrypto.a
+        COMMAND ${CMAKE_COMMAND} -E copy          <BINARY_DIR>/libssl.a     <INSTALL_DIR>/lib/libssl.a
+        COMMAND ${CMAKE_COMMAND} -E copy          <BINARY_DIR>/libcrypto.a <INSTALL_DIR>/lib/libcrypto.a
         COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include          <INSTALL_DIR>/include
 
 
