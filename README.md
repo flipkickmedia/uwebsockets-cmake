@@ -16,11 +16,23 @@ This system builds the required libraries from source so you should be able to m
 This only works with linux at the minute unless there is demand for a Windows/Mac version
 
 # Building
+
+## Defaults
 To build the repository change directory to the root of the repository and run:
+```shell
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
 ```
-mkdir build
-cd build && cmake ../ -DCMAKE_BUILD_TYPE=Release && cmake --build .
+This will configure and build inside a directory named build.
+
+## SSL
+To enable SSL, you have to choose between using EPOLL and UV backends. As of uWebSockets v20.74.0 IO_URING doesn't work with SSL.
+
+```shell
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_IO_URING=OFF -DUSE_LIBUV=ON -DUSE_SSL=ON -DUSE_QUIC=OFF
+cmake --build build -j
 ```
+
 # Running
 Depending on your system, youll need to install a few packages to allow ./Server to run:
 
