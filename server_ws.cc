@@ -7,10 +7,7 @@
 #include <cstdint>
 #include <cstddef>
 
-/* This is a simple WebSocket echo server example.
- * You may compile it with "WITH_OPENSSL=1 make" or with "make" */
-
-uWS::SSLApp *globalApp;
+/* This is a simple WebSocket echo server example. */
 
 /**
  * Get the port number from an environment variable.
@@ -138,25 +135,7 @@ int main() {
             std::cout << "Listening on port " << port << std::endl;
         }
     });
-    //
-    // struct us_loop_t *loop = (struct us_loop_t *) uWS::Loop::get();
-    // struct us_timer_t *delayTimer = us_create_timer(loop, 0, 0);
-    //
-    // // broadcast the unix time as millis every 8 millis
-    // us_timer_set(delayTimer, [](struct us_timer_t */*t*/) {
-    //
-    //     struct timespec ts;
-    //     timespec_get(&ts, TIME_UTC);
-    //
-    //     int64_t millis = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-    //
-    //     //std::cout << "Broadcasting timestamp: " << millis << std::endl;
-    //
-    //     globalApp->publish("broadcast", std::string_view((char *) &millis, sizeof(millis)), uWS::OpCode::BINARY, false);
-    //
-    // }, 8, 8);
-    //
-    //globalApp = &app;
+
     app.run();
 }
 
